@@ -7,11 +7,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ControllerAdvice
-public class AccountNotFoundAdvice {
+public class NonMatchingCurrencyAdvice {
     @ResponseBody
-    @ExceptionHandler(AccountNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    String accountNotFoundHandler(AccountNotFoundException ex) {
+    @ExceptionHandler(NonMatchingCurrencyException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    String nonMatchingCurrencyHandler(NonMatchingCurrencyException ex) {
         return ex.getMessage();
     }
 }

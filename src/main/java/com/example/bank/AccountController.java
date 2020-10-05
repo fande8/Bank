@@ -58,8 +58,14 @@ class AccountController {
 
         Account updatedAccount = repository.findById(id)
                 .map(account -> {
-                    if(newAccount.getName() != null) account.setName(newAccount.getName());
-                    if(newAccount.getBalance() != null) account.setBalance(newAccount.getBalance());
+                    if (newAccount.getName() != null) account.setName(newAccount.getName());
+                    if (newAccount.getBalance() != null) {
+                        if (account.getBalance().getCurrency() == newAccount.getBalance().getCurrency()) {
+                            account.setBalance(newAccount.getBalance());
+                        } else {
+                            throw new NonMatchingCurrencyException("Cannot change account's currency");
+                        }
+                    }
                     return repository.save(account);
                 })
                 .orElseGet(() -> {
