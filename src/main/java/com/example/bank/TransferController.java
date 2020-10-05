@@ -58,6 +58,8 @@ class TransferController {
 
                 source.getBalance().setAmount(source.getBalance().getAmount() - transfer.getAmount());
                 destination.getBalance().setAmount(destination.getBalance().getAmount() + transfer.getAmount());
+                accounts.save(source);
+                accounts.save(destination);
                 transfer.setState(State.Completed);
                 transfers.save(transfer);
 
