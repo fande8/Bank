@@ -2,6 +2,8 @@ package com.example.bank;
 
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.IanaLinkRelations;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,8 +37,12 @@ class AccountController {
     }
 
     @PostMapping("/accounts")
-    Account newAccount(@RequestBody Account newAccount) {
-        return repository.save(newAccount);
+    ResponseEntity<EntityModel<Account>> newAccount(@RequestBody Account newAccount) {
+        EntityModel<Account> entityModel = assembler.toModel(repository.save(newAccount));
+
+        return ResponseEntity
+                .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+                .body(entityModel);
     }
 
     @GetMapping("/accounts/{id}")
@@ -48,9 +54,9 @@ class AccountController {
     }
 
     @PutMapping("/accounts/{id}")
-    Account updateOrCreateAccount(@RequestBody Account newAccount, @PathVariable Long id) {
+    ResponseEntity<EntityModel<Account>> updateOrCreateAccount(@RequestBody Account newAccount, @PathVariable Long id) {
 
-        return repository.findById(id)
+        Account updatedAccount = repository.findById(id)
                 .map(account -> {
                     if(newAccount.getName() != null) account.setName(newAccount.getName());
                     if(newAccount.getBalance() != null) account.setBalance(newAccount.getBalance());
@@ -60,10 +66,18 @@ class AccountController {
                     newAccount.setId(id);
                     return repository.save(newAccount);
                 });
+
+        EntityModel<Account> entityModel = assembler.toModel(repository.save(updatedAccount));
+
+        return ResponseEntity
+                .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+                .body(entityModel);
     }
 
     @DeleteMapping("/accounts/{id}")
-    void deleteAccount(@PathVariable Long id) {
+    ResponseEntity<?> deleteAccount(@PathVariable Long id) {
         repository.deleteById(id);
+
+        return ResponseEntity.noContent().build();
     }
 }
