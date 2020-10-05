@@ -1,27 +1,37 @@
 package com.example.bank;
 
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 @RestController
 class AccountController {
 
     private final AccountRepository repository;
+    private final AccountModelAssembler assembler;
 
-    AccountController(AccountRepository repository) {
+    AccountController(AccountRepository repository, AccountModelAssembler assembler) {
         this.repository = repository;
+        this.assembler = assembler;
     }
 
     @GetMapping("/accounts")
-    Iterable<Account> all(@RequestParam("name") Optional<String> name) {
-        var all = repository.findAll();
+    CollectionModel<EntityModel<Account>> all(@RequestParam("name") Optional<String> name) {
+        var all = repository.findAll().stream()
+                .map(assembler::toModel);
+
         if (name.isPresent()) {
-            all = all.stream().filter(account -> account.getName().equals(name.get())).collect(Collectors.toList());
+            all = all.filter(account -> account.getContent().getName().equals(name.get()));
         }
-        return all;
+        return CollectionModel.of(all.collect(Collectors.toList()),
+                linkTo(methodOn(AccountController.class).all(null)).withSelfRel());
     }
 
     @PostMapping("/accounts")
@@ -30,10 +40,11 @@ class AccountController {
     }
 
     @GetMapping("/accounts/{id}")
-    Account one(@PathVariable Long id) {
+    EntityModel<Account> one(@PathVariable Long id) {
 
-        return repository.findById(id)
+        Account account = repository.findById(id)
                 .orElseThrow(() -> new AccountNotFoundException(id));
+        return assembler.toModel(account);
     }
 
     @PutMapping("/accounts/{id}")
